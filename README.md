@@ -1,21 +1,25 @@
 check-dnsbl
 ===========
 
-Checks a list of DNS blocklists for hosts and IPs.
+Checks a list of DNS blocklists for hosts, IPs and subnet in the CIDR format.
 
-Given any hostname or IP address, this will try to resolve the matching
+Given any hostname or IP address or subnet, this will try to resolve the matching
 IP/hostname, and check for both in all blocklists. For every match that
-is found, a warning is written to STDERR, and the return code will be 1.
+is found, a warning is written to STDERR and to a CSV file, and the return code will be 1.
 Gevent is used for concurrent lookups, the number of active greenlets
 is limited to (the constant) PARALLELISM.
 
 Example usage:
 
 ```
-$ check-dnsbl.py gmail.com test 8.8.8.8
-WARNING: test found in spam blocklist dob.sibl.support-intelligence.net!
-WARNING: test found in spam blocklist dbl.spamhaus.org!
-WARNING: 8.8.8.8 found in spam blocklist cblless.anti-spam.org.cn!
-WARNING: 8.8.8.8 found in spam blocklist cbl.anti-spam.org.cn!
-WARNING: 8.8.8.8 found in spam blocklist cblplus.anti-spam.org.cn!
+$ ./check-dnsbl.py gmail.com 8.8.8.8/30 8.8.4.4 
+WARNING: gmail.com found in spam blocklist multi.uribl.com!
+WARNING: 172.217.23.101 found in spam blocklist multi.uribl.com!
+WARNING: google-public-dns-a.google.com found in spam blocklist multi.uribl.com!
+WARNING: 8.8.8.8 found in spam blocklist multi.uribl.com!
+WARNING: 8.8.8.9 found in spam blocklist multi.uribl.com!
+WARNING: 8.8.8.10 found in spam blocklist multi.uribl.com!
+WARNING: 8.8.8.11 found in spam blocklist multi.uribl.com!
+WARNING: google-public-dns-b.google.com found in spam blocklist multi.uribl.com!
+WARNING: 8.8.4.4 found in spam blocklist multi.uribl.com!
 ```
