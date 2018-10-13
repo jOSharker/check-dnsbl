@@ -5,7 +5,11 @@ Checks a list of DNS blocklists for hosts, IPs and subnet in the CIDR format.
 
 Given any hostname or IP address or subnet, this will try to resolve the matching
 IP/hostname, and check for both in all blocklists. For every match that
+<<<<<<< HEAD
 is found, a warning is written to STDERR and to a CSV file, and the return code will be 1.
+=======
+is found, a warning is written to STDERR and in a CSV file, and the return code will be 1.
+>>>>>>> efced64933791294472c472c22b9f7e81b020328
 Gevent is used for concurrent lookups, the number of active greenlets
 is limited to (the constant) PARALLELISM.
 
