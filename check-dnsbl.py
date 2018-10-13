@@ -29,7 +29,8 @@ import gevent
 import gevent.pool
 import sys
 import socket
-
+import ipaddress
+import time
 LOOKUP_TIMEOUT = 10
 PARALELLISM = 10
 
@@ -147,6 +148,7 @@ DNS_BLS = set([
 ])
 
 
+f = open('BL_'+time.strftime("%Y%m%d_%H%M%S")+'.csv','w')
 class Host:
     def __init__(self, hostname=None, addr=None):
         self.hostname = hostname
@@ -162,6 +164,12 @@ class Host:
         addr_split.reverse()
         return ".".join(addr_split)
 
+def cidr_to_ips(cidr_net):
+    #conversion to unicode to use the ipaddress library
+    unicodeversion = unicode(cidr_net)
+    net = ipaddress.ip_network(unicodeversion,False)
+    #net = ipaddress.ip_network('10.10.10.10/25')
+    return net
 
 def lookup(host_rbl):
     """
@@ -175,6 +183,7 @@ def lookup(host_rbl):
     try:
         socket.gethostbyname(rblhost)
         sys.stderr.write("WARNING: %s found in spam blocklist %s!\n" % (host[-1], rbl))
+        f.write(time.strftime("%Y%m%d %H:%M:%S")+','+host[-1]+','+rbl+'\n')
         sys.stderr.flush()
         return True
     except socket.gaierror:
@@ -222,18 +231,28 @@ def main():
         sys.exit(1)
     socket.setdefaulttimeout(LOOKUP_TIMEOUT)
     hosts_rbls = []
+    #f = open('BL_'+time.strftime("%Y%m%d_%H%M%S")+'.csv','w')
+    f.write('DATA,IP o Host,BLACKLIST\n')
     for hostname_or_ip in sys.argv[1:]:
-        host = get_host_and_ip(hostname_or_ip)
-        for rbl in DNS_BLS:
-            if host.hostname is not None:
-                hosts_rbls.append(((host.hostname,), rbl))
-            if rbl not in HOST_LOOKUP_ONLY and host.addr is not None:
-                hosts_rbls.append(((host.inverse_addr(), host.addr), rbl))
+        #check if CIDR format or not
+        if hostname_or_ip.find('/') > 0:
+            net = cidr_to_ips(hostname_or_ip)
+        else:
+            net = [hostname_or_ip]
+
+        for newhostname_or_ip in net:
+            #use of str function to convert from IPv4 to string
+            host = get_host_and_ip(str(newhostname_or_ip))
+            for rbl in DNS_BLS:
+                if host.hostname is not None:
+                    hosts_rbls.append(((host.hostname,), rbl))
+                if rbl not in HOST_LOOKUP_ONLY and host.addr is not None:
+                    hosts_rbls.append(((host.inverse_addr(), host.addr), rbl))
 
     in_rbl = lookup_parallel(hosts_rbls)
     if in_rbl:
         sys.exit(1)
-
+    f.close()
 
 if __name__ in "__main__":
     main()
